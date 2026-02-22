@@ -11,7 +11,7 @@ TG_CHAT_ID = os.environ.get('TG_CHAT_ID')
 GROUP_DOMAIN = os.environ.get('GROUP_DOMAIN')
 
 # Слова для поиска
-KEYWORDS = ['рогатка', 'ceratophrys', 'cornuta', 'корнута']
+KEYWORDS = ['рогатка', 'ceratophrys', 'cornuta', 'корнута', 'рогатки', 'амазонская', 'итания', 'итанния']
 
 # Храним ID постов, которые уже проверили
 processed_posts = set()
