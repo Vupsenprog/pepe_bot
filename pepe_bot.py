@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 # Импортируем безопасные настройки из отдельного файла
 from config import *
 
-# ---------- ПОЛУЧАЕМ ТОКЕНЫ ИЗ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ----------
+# --------- ПОЛУЧАЕМ ТОКЕНЫ ИЗ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ---------
 # Эти значения будут браться из настроек сервера (Timeweb)
 VK_TOKEN = os.environ.get('VK_TOKEN')
 TG_TOKEN = os.environ.get('TG_TOKEN')
