@@ -1,7 +1,7 @@
 import vk_api
 import requests
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Импортируем ВСЕ настройки из отдельного файла
 from config import *
@@ -56,13 +56,15 @@ def check_vk():
             
             if found:
                 link = f"https://vk.com/wall-{group_id}_{post_id}"
-                time_str = datetime.fromtimestamp(post['date']).strftime('%d.%m.%Y %H:%M')
+                # Прибавляем 3 часа для Москвы
+                moscow_time = datetime.fromtimestamp(post['date']) + timedelta(hours=3)
+                time_str = moscow_time.strftime('%d.%m.%Y %H:%M')
                 
-                msg = f"""🔔 НОВОЕ ОБЪЯВЛЕНИЕ!
+                msg = f"""🟢 НОВОЕ ОБЪЯВЛЕНИЕ!
 
 Найдено: {', '.join(found)}
 Ссылка: {link}
-Время: {time_str}"""
+Время: {time_str} (МСК)"""
                 
                 send_telegram(msg)
             
