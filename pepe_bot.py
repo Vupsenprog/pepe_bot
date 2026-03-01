@@ -43,50 +43,38 @@ def cleanup_memory():
             print(f"🧹 Очистка памяти: оставили {len(processed_posts)} ID")
 
 def check_vk():
-    """Проверка новых постов с подробной отладкой"""
+    """Проверка новых постов — ИСПРАВЛЕННАЯ ВЕРСИЯ"""
     global processed_posts
     
     try:
-        print("\n" + "="*50)
-        print("🔄 НАЧАЛО ПРОВЕРКИ")
-        print(f"📊 ТЕКУЩИЙ РАЗМЕР processed_posts: {len(processed_posts)}")
-        print(f"📋 ПОСЛЕДНИЕ 10 ID В ПАМЯТИ: {sorted(list(processed_posts))[-10:] if processed_posts else '[]'}")
+        print("\n" + "🔴"*30)
+        print(f"🔄 НАЧАЛО ПРОВЕРКИ в {datetime.now().strftime('%H:%M:%S')}")
+        print(f"📊 В ПАМЯТИ СЕЙЧАС: {len(processed_posts)} ID")
         
         vk = vk_api.VkApi(token=VK_TOKEN).get_api()
         group = vk.groups.getById(group_id=GROUP_DOMAIN)[0]
         group_id = group['id']
         
         posts = vk.wall.get(owner_id=-group_id, count=10, v='5.131')
-        print(f"📥 ПОЛУЧЕНО {len(posts['items'])} ПОСТОВ ИЗ ВК")
+        print(f"📥 Получено {len(posts['items'])} постов")
         
-        for i, post in enumerate(posts['items']):
+        for post in posts['items']:
             post_id = post['id']
-            print(f"\n--- ПОСТ #{i+1} (ID: {post_id}) ---")
             
-            # Проверяем, есть ли пост в памяти
-            in_memory = post_id in processed_posts
-            print(f"🔍 Пост {post_id} уже в processed_posts? {in_memory}")
+            print(f"\n--- ПОСТ ID: {post_id} ---")
             
-            # Получаем текст поста
+            # 1. СНАЧАЛА ПРОВЕРЯЕМ, есть ли пост в памяти
+            if post_id in processed_posts:
+                print(f"⏭️ Пост {post_id} уже обработан, пропускаем")
+                continue  # ВАЖНО: сразу переходим к следующему посту
+            
+            # 2. ЕСЛИ ПОСТА НЕТ В ПАМЯТИ, тогда проверяем текст
             text = post['text'].lower() if post['text'] else ''
-            print(f"📝 Текст поста (первые 100 символов): {text[:100]}...")
-            
-            # Ищем ключевые слова
             found = [word for word in KEYWORDS if word.lower() in text]
-            print(f"🔎 Найденные слова: {found if found else 'НЕТ'}")
             
-            # Пропускаем, если пост уже обработан
-            if in_memory:
-                if found:
-                    print(f"⚠️⚠️⚠️ ВНИМАНИЕ! Пост {post_id} УЖЕ В ПАМЯТИ, но содержит ключевые слова!")
-                    print(f"⚠️ Это объясняет повторные уведомления!")
-                else:
-                    print(f"⏭️ Пост {post_id} уже обработан (нет ключевых слов)")
-                continue
-            
-            # Если нашли слова - отправляем уведомление
+            # 3. Если нашли слова — отправляем уведомление
             if found:
-                print(f"✅✅✅ НОВЫЙ ПОСТ {post_id} с ключевыми словами! ОТПРАВЛЯЮ УВЕДОМЛЕНИЕ")
+                print(f"✅ НАЙДЕН НОВЫЙ ПОСТ {post_id} со словами: {found}")
                 
                 link = f"https://vk.com/wall-{group_id}_{post_id}"
                 moscow_time = datetime.fromtimestamp(post['date']) + timedelta(hours=3)
@@ -99,30 +87,22 @@ def check_vk():
 Время: {time_str} (МСК)"""
                 
                 send_telegram(msg)
-                print(f"✅ Уведомление для поста {post_id} отправлено")
+                print(f"✅ Уведомление отправлено для поста {post_id}")
             else:
                 print(f"❌ В посте {post_id} ключевых слов не найдено")
             
-            # Добавляем пост в обработанные (ВАЖНО: добавляем ВСЕГДА!)
+            # 4. В ЛЮБОМ СЛУЧАЕ добавляем пост в обработанные
             processed_posts.add(post_id)
-            print(f"➕ Пост {post_id} ДОБАВЛЕН в processed_posts")
-            print(f"📊 Размер processed_posts после добавления: {len(processed_posts)}")
+            print(f"➕ Пост {post_id} добавлен в обработанные. Теперь в памяти: {len(processed_posts)}")
             
-            # Вызываем очистку памяти
-            old_size = len(processed_posts)
+            # 5. Очистка памяти
             cleanup_memory()
-            new_size = len(processed_posts)
-            if old_size != new_size:
-                print(f"🧹 cleanup_memory сработала: было {old_size}, стало {new_size}")
         
-        # Итог проверки
-        print("\n📊 ИТОГ ПРОВЕРКИ:")
-        print(f"📊 Всего в памяти: {len(processed_posts)} ID")
-        print(f"📋 Последние 10 ID: {sorted(list(processed_posts))[-10:] if processed_posts else '[]'}")
-        print("="*50 + "\n")
+        print(f"📊 ИТОГ: в памяти {len(processed_posts)} ID")
+        print("🔴"*30 + "\n")
             
     except Exception as e:
-        print(f"❌ ОШИБКА В check_vk: {e}")
+        print(f"❌ Ошибка: {e}")
         import traceback
         traceback.print_exc()
         
