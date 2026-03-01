@@ -94,3 +94,52 @@ print("📝 Для изменения настроек отредактируй�
 while True:
     check_vk()
     time.sleep(CHECK_INTERVAL)
+
+def check_vk():
+    global processed_posts
+    
+    try:
+        vk = vk_api.VkApi(token=VK_TOKEN).get_api()
+        group = vk.groups.getById(group_id=GROUP_DOMAIN)[0]
+        group_id = group['id']
+        
+        posts = vk.wall.get(owner_id=-group_id, count=10, v='5.131')
+        
+        for post in posts['items']:
+            post_id = post['id']
+            
+            print(f"🔍 Проверяю пост {post_id}")
+            
+            if post_id in processed_posts:
+                print(f"⏭️ Пост {post_id} уже обработан, пропускаю")
+                continue
+            
+            text = post['text'].lower() if post['text'] else ''
+            found = [word for word in KEYWORDS if word.lower() in text]
+            
+            if found:
+                print(f"✅ НАШЁЛ в посте {post_id}: {found}")
+                link = f"https://vk.com/wall-{group_id}_{post_id}"
+                moscow_time = datetime.fromtimestamp(post['date']) + timedelta(hours=3)
+                time_str = moscow_time.strftime('%d.%m.%Y %H:%M')
+                
+                msg = f"""🟢 НОВОЕ ОБЪЯВЛЕНИЕ!
+
+Найдено: {', '.join(found)}
+Ссылка: {link}
+Время: {time_str} (МСК)"""
+                
+                send_telegram(msg)
+                print(f"✅ Уведомление для поста {post_id} отправлено")
+            else:
+                print(f"❌ В посте {post_id} ничего не найдено")
+            
+            # Добавляем пост в обработанные
+            processed_posts.add(post_id)
+            print(f"➕ Пост {post_id} добавлен в обработанные. Всего в памяти: {len(processed_posts)}")
+            cleanup_memory()
+        
+        print(f"📊 Всего в памяти: {len(processed_posts)} ID")
+            
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
